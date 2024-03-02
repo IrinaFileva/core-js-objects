@@ -338,34 +338,72 @@ function group(array, keySelector, valueSelector) {
  *
  *  For more examples see unit tests.
  */
+const complexSelector = {
+  element: 1,
+  id: 2,
+  class: 3,
+  attr: 4,
+  pseudoClass: 5,
+  pseudoElement: 6,
+};
+const only = [
+  complexSelector.element,
+  complexSelector.id,
+  complexSelector.pseudoElement,
+];
 
 const cssSelectorBuilder = {
-  element(/* value */) {
-    throw new Error('Not implemented');
+  resultString: '',
+
+  checking(value, selector) {
+    if (this.selectors === selector && only.includes(selector)) {
+      throw Error(
+        'Element, id and pseudo-element should not occur more then one time inside the selector'
+      );
+    }
+    if (this.selectors > selector) {
+      throw Error(
+        'Selector parts should be arranged in the following order: element, id, class, attribute, pseudo-class, pseudo-element'
+      );
+    }
+    const obj = { ...this };
+    obj.selectors = selector;
+    obj.resultString = this.resultString + value;
+    return obj;
   },
 
-  id(/* value */) {
-    throw new Error('Not implemented');
+  element(value) {
+    return this.checking(value, complexSelector.element);
   },
 
-  class(/* value */) {
-    throw new Error('Not implemented');
+  id(value) {
+    return this.checking(`#${value}`, complexSelector.id);
   },
 
-  attr(/* value */) {
-    throw new Error('Not implemented');
+  class(value) {
+    return this.checking(`.${value}`, complexSelector.class);
   },
 
-  pseudoClass(/* value */) {
-    throw new Error('Not implemented');
+  attr(value) {
+    return this.checking(`[${value}]`, complexSelector.attr);
   },
 
-  pseudoElement(/* value */) {
-    throw new Error('Not implemented');
+  pseudoClass(value) {
+    return this.checking(`:${value}`, complexSelector.pseudoClass);
   },
 
-  combine(/* selector1, combinator, selector2 */) {
-    throw new Error('Not implemented');
+  pseudoElement(value) {
+    return this.checking(`::${value}`, complexSelector.pseudoElement);
+  },
+
+  combine(selector1, combinator, selector2) {
+    const obj = { ...this };
+    obj.resultString = `${selector1.resultString} ${combinator} ${selector2.resultString}`;
+    return obj;
+  },
+
+  stringify() {
+    return this.resultString;
   },
 };
 
